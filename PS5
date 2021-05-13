@@ -1,0 +1,50 @@
+
+
+## Reading files 
+
+Reforms <- read_dta("IMFreforms_reshaped.dta")
+summary(Reforms)
+
+IGM <- read.csv("GDIM.csv", header = TRUE)
+summary(IGM)
+
+GDP <- read.csv("GDP.csv", sep = ";", header = TRUE)
+GDP$Entity_num <- as.numeric(GDP$Entity_num)
+GDP$Entity <- as.character(GDP$Entity)
+
+## Creating OECD country data list 
+
+GDP <- GDP[,1]
+GDP <- as.data.frame(GDP)
+OECD <- GDP[!duplicated(GDP$GDP), ]
+OECD <- as.data.frame(OECD)
+
+## Ensuring only OECD countries in dataset 
+
+IGM <- IGM[(IGM$countryname %in% OECD$OECD),]
+
+IGM <- IGM[which(IGM$parent == "avg" & IGM$child == "all"), ]
+
+Reforms <- Reforms[(Reforms$country %in% OECD$OECD),]
+
+## Dropping non-neccessary variables 
+
+IGM <- IGM[,-c(45:66)]
+
+## Creating a common year variable (don't laugh, I know there are better ways lol)
+
+Reforms$Yeargroup <- Reforms$year/10
+Reforms$Yeargroup <- round(Reforms$Yeargroup) 
+
+IGM$Yeargroup <- IGM$year/10
+IGM$Yeargroup <- round(IGM$Yeargroup) 
+
+## Creating a common variable 
+
+IGM$interaction <- interaction(IGM$countryname, IGM$Yeargroup)
+Reforms$interaction <- interaction(Reforms$country, Reforms$Yeargroup)
+
+## Final data set 
+
+FinalData <- merge(IGM, Reforms, by="interaction")
+
